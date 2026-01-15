@@ -129,7 +129,7 @@ WEBCHAT_INDEX="/app/dist/ui/chat/index.html"
 if [ -f "${WEBCHAT_INDEX}" ]; then
     # Inject script that sets the token in localStorage before the app initializes
     # The app reads settings from localStorage and uses the token for WebSocket auth
-    INJECT_SCRIPT="<script>(function(){try{var k='clawdbot-control-settings',s=localStorage.getItem(k),o=s?JSON.parse(s):{};if(!o.token){o.token='${AUTH_TOKEN}';localStorage.setItem(k,JSON.stringify(o));}}catch(e){}})();</script>"
+    INJECT_SCRIPT="<script>(function(){try{var k='clawdbot.control.settings.v1',s=localStorage.getItem(k),o=s?JSON.parse(s):{};if(!o.token){o.token='${AUTH_TOKEN}';localStorage.setItem(k,JSON.stringify(o));}}catch(e){}})();</script>"
     sed -i "s|</head>|${INJECT_SCRIPT}</head>|" "${WEBCHAT_INDEX}"
     echo "  Auth token injected into WebChat UI"
 fi
