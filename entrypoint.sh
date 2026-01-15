@@ -20,16 +20,22 @@ generate_config() {
         TELEGRAM_TOKEN="${TELEGRAM_BOT_TOKEN}"
     fi
 
+    # Generate auth token if not provided
+    local AUTH_TOKEN="${CLAWDBOT_GATEWAY_TOKEN:-$(head -c 32 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9' | head -c 32)}"
+
     # Write configuration file
+    # Note: WebChat UI is served by Gateway on port 18789 at /chat
+    # bind: "lan" required to expose outside container (default is loopback)
     cat > "${CONFIG_FILE}" <<EOF
 {
   "gateway": {
     "mode": "local",
-    "port": ${CLAWDBOT_GATEWAY_PORT:-18789}
-  },
-  "webchat": {
-    "enabled": true,
-    "port": ${CLAWDBOT_WEBCHAT_PORT:-18790}
+    "port": ${CLAWDBOT_GATEWAY_PORT:-18789},
+    "bind": "lan",
+    "auth": {
+      "mode": "token",
+      "token": "${AUTH_TOKEN}"
+    }
   },
   "channels": {
     "telegram": {
@@ -108,8 +114,8 @@ fi
 
 echo "Starting Clawdbot..."
 echo "  Gateway port: ${CLAWDBOT_GATEWAY_PORT:-18789}"
-echo "  WebChat port: ${CLAWDBOT_WEBCHAT_PORT:-18790}"
+echo "  WebChat UI: http://localhost:${CLAWDBOT_GATEWAY_PORT:-18789}/chat"
 
 # Start the gateway
 cd /app
-exec node dist/index.js gateway --allow-unconfigured
+exec node dist/index.js gateway
