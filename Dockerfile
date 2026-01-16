@@ -55,7 +55,8 @@ RUN pnpm ui:build
 
 # Install Playwright Chromium for browser automation
 # This enables the browser tool for web scraping/automation
-RUN npx playwright install chromium
+# playwright-core is already installed, just need the browser binary
+RUN npx -y playwright@latest install chromium
 
 # Create data directories
 RUN mkdir -p /root/.clawdbot /root/clawd
