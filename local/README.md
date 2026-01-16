@@ -4,40 +4,77 @@
 
 1. Copy the example files:
    ```bash
-   cp clawdbot.example.json clawdbot.json
    cp .env.example .env
    ```
 
-2. Edit `.env` with your API keys
+2. Edit `.env` with your API keys and tokens
 
-3. Edit `clawdbot.json` to enable channels you want
-
-4. Start Clawdbot:
+3. Start Clawdbot:
    ```bash
-   # Load env vars and start
-   source .env && clawdbot gateway --config ./clawdbot.json
+   source .env && docker run -d \
+     --name clawdbot-local \
+     -p 18789:18789 \
+     -p 18790:18790 \
+     -e MINIMAX_API_KEY="$MINIMAX_API_KEY" \
+     -e TELEGRAM_BOT_TOKEN="$TELEGRAM_BOT_TOKEN" \
+     -e TELEGRAM_ALLOWED_USERS="$TELEGRAM_ALLOWED_USERS" \
+     -e CLAWDBOT_GATEWAY_TOKEN="$CLAWDBOT_GATEWAY_TOKEN" \
+     -v clawdbot-data:/root/.clawdbot \
+     -v clawdbot-workspace:/root/clawd \
+     ghcr.io/zot24/clawdbot-docker:latest
    ```
+
+## Environment Variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `MINIMAX_API_KEY` | Yes* | MiniMax API key for M2.1 model |
+| `ANTHROPIC_API_KEY` | Yes* | Anthropic API key for Claude |
+| `TELEGRAM_BOT_TOKEN` | No | Telegram bot token from @BotFather |
+| `TELEGRAM_ALLOWED_USERS` | No | Comma-separated Telegram user IDs to pre-approve |
+| `CLAWDBOT_DM_POLICY` | No | `pairing` (default) or `open` |
+| `CLAWDBOT_GATEWAY_TOKEN` | No | Auth token for WebChat (auto-generated if not set) |
+
+\* At least one LLM provider key required
 
 ## Files
 
-- `clawdbot.example.json` - Template (safe to share)
-- `clawdbot.json` - Your config (gitignored)
+- `.env.example` - Template (safe to share)
 - `.env` - Your secrets (gitignored)
 
-## Testing
+## Commands
 
-Start gateway:
+Stop:
 ```bash
-cd local
-source .env && clawdbot gateway --config ./clawdbot.json
+docker stop clawdbot-local
 ```
 
-Login to WhatsApp (scan QR):
+View logs:
 ```bash
-clawdbot channels login
+docker logs -f clawdbot-local
 ```
 
-Check status:
+Restart:
 ```bash
-clawdbot status
+docker restart clawdbot-local
 ```
+
+Approve Telegram pairing:
+```bash
+docker exec clawdbot-local node dist/index.js pairing approve telegram <CODE>
+```
+
+## Access
+
+- **WebChat UI**: http://localhost:18789/chat
+- **Gateway WebSocket**: ws://localhost:18789
+
+## Building Locally
+
+To test changes to the Docker image:
+```bash
+cd ..
+docker build -t clawdbot:local .
+```
+
+Then use `clawdbot:local` instead of `ghcr.io/zot24/clawdbot-docker:latest`.
