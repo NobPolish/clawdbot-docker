@@ -1,0 +1,53 @@
+name: Watch Clawdbot Releases
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'  # Every 6 hours
+  workflow_dispatch:  # Manual trigger
+
+jobs:
+  check-release:
+    runs-on: ubuntu-latest
+    outputs:
+      new_release: ${{ steps.check.outputs.new_release }}
+      version: ${{ steps.check.outputs.version }}
+    steps:
+      - name: Get latest clawdbot release
+        id: check
+        run: |
+          LATEST=$(gh release view -R clawdbot/clawdbot --json tagName -q .tagName)
+          echo "Latest clawdbot release: $LATEST"
+          CACHED=$(gh variable get LAST_CLAWDBOT_VERSION -R ${{ github.repository }} 2>/dev/null || echo "")
+          echo "Cached version: $CACHED"
+          if [ "$LATEST" != "$CACHED" ]; then
+            echo "New release detected!"
+            echo "new_release=true" >> $GITHUB_OUTPUT
+            echo "version=$LATEST" >> $GITHUB_OUTPUT
+          else
+            echo "No new release"
+            echo "new_release=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build:
+    needs: check-release
+    if: needs.check-release.outputs.new_release == 'true'
+    uses: ./.github/workflows/build.yml
+    with:
+      clawdbot_version: ${{ needs.check-release.outputs.version }}
+    secrets: inherit
+
+  update-cache:
+    needs: [check-release, build]
+    if: needs.check-release.outputs.new_release == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - name: Update cached version
+        run: |
+          gh variable set LAST_CLAWDBOT_VERSION -R ${{ github.repository }} -b "${{ needs.check-release.outputs.version }}"
+          echo "Updated cached version to: ${{ needs.check-release.outputs.version }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
