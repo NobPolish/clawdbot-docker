@@ -28,6 +28,10 @@ services:
       # Gateway auth token (auto-generated if not set)
       - CLAWDBOT_GATEWAY_TOKEN=${CLAWDBOT_GATEWAY_TOKEN:-}
 
+      # ElevenLabs TTS (for sag command)
+      - ELEVENLABS_API_KEY=${ELEVENLABS_API_KEY:-}
+      - SAG_VOICE_ID=${SAG_VOICE_ID:-}
+
       # Set to "true" to regenerate config from env vars
       # - CLAWDBOT_REGEN_CONFIG=true
     restart: unless-stopped

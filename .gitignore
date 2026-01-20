@@ -6,3 +6,7 @@ local/*.local.json
 
 # Docker mounted volume (user config, credentials, session data)
 config/
+workspace/
+
+# Claude Code local settings
+.claude/

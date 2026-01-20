@@ -6,6 +6,20 @@ Built for use with [Umbrel](https://umbrel.com) and other self-hosted platforms.
 
 ## Quick Start
 
+### Using Docker Compose (Recommended)
+
+1. Clone this repository
+2. Copy `.env.example` to `.env` and add your API keys
+3. Run:
+
+```bash
+docker compose up -d
+```
+
+4. Open http://localhost:18789/chat
+
+### Using Docker Run
+
 ```bash
 docker run -d \
   -p 18789:18789 \
@@ -102,6 +116,13 @@ The image auto-selects a model based on available API keys. Override with `CLAWD
 | `ENABLE_EXEC` | `true` | Enable shell execution |
 | `EXEC_TIMEOUT` | `30000` | Exec timeout in milliseconds |
 
+### Text-to-Speech (sag)
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ELEVENLABS_API_KEY` | | ElevenLabs API key for TTS |
+| `SAG_VOICE_ID` | | Default voice ID for sag |
+
 ### Data Directories
 
 | Variable | Default | Description |
@@ -181,17 +202,47 @@ docker run -d \
 - **Image Processing**: ImageMagick for image manipulation
 - **Shell Execution**: Run commands via the exec tool
 - **Memory Search**: Semantic search over conversation history
+- **Text-to-Speech**: ElevenLabs TTS via [sag](https://github.com/steipete/sag)
+- **Speech-to-Text**: OpenAI Whisper for transcription
+- **MCP Tools**: mcporter for Model Context Protocol servers
+- **Python Tools**: uv/uvx for running Python MCP tools
+- **GitHub CLI**: gh for GitHub operations
 
 ## Building Locally
 
 ```bash
+# Build with docker-compose
+docker compose build
+
+# Or build directly
 docker build -t clawdbot:local .
 ```
 
+The Dockerfile uses a multi-stage build for optimal caching:
+1. **deps**: System packages, Go, Python, global tools (cached)
+2. **builder**: Clone and build Clawdbot (rebuilds on version changes)
+3. **runtime**: Final image with all tools
+
+## Included Tools
+
+| Tool | Purpose |
+|------|---------|
+| **Playwright + Chromium** | Browser automation and web scraping |
+| **FFmpeg** | Audio/video processing |
+| **ImageMagick** | Image manipulation |
+| **sag** | ElevenLabs TTS CLI |
+| **whisper** | OpenAI speech-to-text |
+| **mcporter** | MCP server management |
+| **uv/uvx** | Python tool runner |
+| **gh** | GitHub CLI |
+| **xvfb** | Virtual framebuffer for headless browsers |
+
 ## Image Size
 
-The full-featured image is approximately 800MB-1GB due to:
+The full-featured image is approximately 1.5-2GB due to:
 - Node.js runtime
+- Go runtime and sag binary
+- Python and uv
 - Chromium browser
 - FFmpeg and ImageMagick
 - Clawdbot and dependencies

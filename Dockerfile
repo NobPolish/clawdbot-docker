@@ -15,6 +15,8 @@ FROM node:22-bookworm-slim AS deps
 # - Media processing: ffmpeg, imagemagick
 # - Browser automation: chromium and dependencies
 # - Python tools: python3, pip
+# - Go: for sag TTS tool
+# - Audio: ALSA/PulseAudio for TTS playback
 # - Utilities: gh (GitHub CLI), zip, unzip, tar
 RUN apt-get update && apt-get install -y \
     # Build essentials
@@ -24,9 +26,16 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     # GitHub CLI
     gh \
+    # Go (for sag TTS)
+    golang-go \
     # Media processing
     ffmpeg \
     imagemagick \
+    # Audio playback (for sag TTS)
+    alsa-utils \
+    libasound2-dev \
+    pkg-config \
+    pulseaudio \
     # Python (for uvx/MCP tools)
     python3 \
     python3-pip \
@@ -64,11 +73,14 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 # Install Node.js global tools
 RUN npm install -g mcporter
 
-# Install Python tools (uv/uvx for running Python MCP tools)
-RUN pip3 install --no-cache-dir --break-system-packages uv
+# Install Python tools (uv/uvx for running Python MCP tools, whisper for STT)
+RUN pip3 install --no-cache-dir --break-system-packages uv openai-whisper
 
-# Set PATH for Python tools
-ENV PATH="/root/.local/bin:${PATH}"
+# Install sag (ElevenLabs TTS CLI)
+# https://github.com/steipete/sag
+ENV GOPATH="/root/go"
+ENV PATH="/root/go/bin:/root/.local/bin:${PATH}"
+RUN go install github.com/steipete/sag/cmd/sag@latest
 
 # Install Playwright Chromium browser
 RUN npx -y playwright@latest install chromium
