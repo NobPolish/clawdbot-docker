@@ -10,3 +10,7 @@ workspace/
 
 # Claude Code local settings
 .claude/
+
+# Node.js dependencies
+node_modules/
+webapp/node_modules/
